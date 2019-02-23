@@ -215,23 +215,30 @@ for key in source_bucket.objects.all():
         SOURCE_BUCKET_NAME, "/".join(key.key.split("/")[0:-1])
     )
 
+    new_assets = {}
+
     original_tiff = assets["RGB Tif"]
     original_tiff["href"] = "{}/{}".format(source_prefix, original_tiff["href"])
     original_tiff["title"] = "RGB GeoTIFF"
     original_tiff["type"] = "image/vnd.stac.geotiff"
     del original_tiff["name"]
 
-    original_tiff_world = assets["tiff world file"]
-    original_tiff_world["href"] = "{}/{}".format(
-        source_prefix, original_tiff_world["href"]
-    )
-    original_tiff_world["title"] = "RGB GeoTIFF world file"
-    original_tiff_world[
-        "type"
-    ] = (
-        "text/plain"
-    )  # per https://www.loc.gov/preservation/digital/formats/fdd/fdd000287.shtml#sign
-    del original_tiff_world["name"]
+    new_assets["original TIFF"] = original_tiff
+
+    if "tiff world file" in assets:
+        original_tiff_world = assets["tiff world file"]
+        original_tiff_world["href"] = "{}/{}".format(
+            source_prefix, original_tiff_world["href"]
+        )
+        original_tiff_world["title"] = "RGB GeoTIFF world file"
+        original_tiff_world[
+            "type"
+        ] = (
+            "text/plain"
+        )  # per https://www.loc.gov/preservation/digital/formats/fdd/fdd000287.shtml#sign
+        del original_tiff_world["name"]
+
+        new_assets["original TIFF world file"] = original_tiff_world
 
     jpeg = assets["RGB JPEG"]
     jpeg["href"] = "{}/{}".format(source_prefix, jpeg["href"])
@@ -239,11 +246,15 @@ for key in source_bucket.objects.all():
     jpeg["type"] = "image/jpeg"
     del jpeg["name"]
 
+    new_assets["JPEG"] = jpeg
+
     jpeg_overviews = assets["jpg overview"]
     jpeg_overviews["href"] = "{}/{}".format(source_prefix, jpeg_overviews["href"])
     jpeg_overviews["title"] = "JPEG overviews"
     jpeg_overviews["type"] = "image/tiff"
     del jpeg_overviews["name"]
+
+    new_assets["JPEG overviews"] = jpeg_overviews
 
     jpeg_world = assets["jpeg world file"]
     jpeg_world["href"] = "{}/{}".format(source_prefix, jpeg_world["href"])
@@ -251,11 +262,15 @@ for key in source_bucket.objects.all():
     jpeg_world["type"] = "text/plain"
     del jpeg_world["name"]
 
+    new_assets["JPEG world file"] = jpeg_world
+
     thumbnail = assets["thumbnail"]
     thumbnail["href"] = "{}/{}".format(source_prefix, thumbnail["href"])
     thumbnail["title"] = "Thumbnail"
     thumbnail["type"] = "image/png"
     del thumbnail["name"]
+
+    new_assets["thumbnail"] = thumbnail
 
     visual = assets["cog"]
     visual["href"] = "{}/{}".format(source_prefix, visual["href"])
@@ -264,6 +279,8 @@ for key in source_bucket.objects.all():
     del visual["format"]
     del visual["name"]
 
+    new_assets["visual"] = visual
+
     item = Item(
         {
             "type": "Feature",
@@ -271,15 +288,7 @@ for key in source_bucket.objects.all():
             "bbox": old_item["bbox"],
             "geometry": old_item["geometry"],
             "properties": {"datetime": old_item["properties"]["datetime"]},
-            "assets": {
-                "original TIFF": original_tiff,
-                "original TIFF world file": original_tiff_world,
-                "JPEG": jpeg,
-                "JPEG overviews": jpeg_overviews,
-                "JPEG world file": jpeg_world,
-                "thumbnail": thumbnail,
-                "visual": visual,
-            },
+            "assets": new_assets,
         }
     )
 
