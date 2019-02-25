@@ -157,6 +157,25 @@ root_catalog = Catalog(
                 "roles": ["processor", "host"],
             },
         ],
+        "properties": {
+            "eo:gsd": 5.6,
+            "eo:platform": "ISS",
+            "eo:instrument": "ISERV",
+            "eo:bands": [
+                {
+                    "centerWavelength": 0.7,
+                    "common_name": "red",
+                },
+                {
+                    "centerWavelength": 0.55,
+                    "common_name": "green",
+                },
+                {
+                    "centerWavelength": 0.45,
+                    "common_name": "blue",
+                },
+            ]
+        },
     }
 )
 root_catalog.add_link("root", root_href)
@@ -199,6 +218,7 @@ for key in source_bucket.objects.all():
                 }
             )
             catalog.add_link("root", root_href)
+            catalog.add_link("collection", root_href)
             catalog.add_link("parent", "../catalog.json")
             parent.add_link("child", catalog_href)
 
