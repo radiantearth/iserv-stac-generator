@@ -184,7 +184,12 @@ root_catalog.add_link("self", root_href)
 catalogs = {"root": root_catalog}
 
 for key in source_bucket.objects.all():
-    if not key.key.endswith(".json") or key.key.endswith("catalog.json"):
+    if (
+        not key.key.endswith(".json")
+        or key.key.endswith("catalog.json")
+        or key.key.endswith("iserv.json")
+        or key.key.endswith("product.json")
+    ):
         continue
 
     parents = []
