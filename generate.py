@@ -231,109 +231,165 @@ for key in source_bucket.objects.all():
 
         parents.append(component)
 
-    obj = source_bucket.Object(key.key)
-    old_item = json.loads(obj.get()["Body"].read().decode("utf-8"))
+    try:
+        obj = source_bucket.Object(key.key)
+        old_item = json.loads(obj.get()["Body"].read().decode("utf-8"))
 
-    assets = old_item["assets"]
+        assets = old_item["assets"]
 
-    source_prefix = "https://{}.s3.amazonaws.com/{}".format(
-        SOURCE_BUCKET_NAME, "/".join(key.key.split("/")[0:-1])
-    )
-
-    new_assets = {}
-
-    original_tiff = assets["RGB Tif"]
-    original_tiff["href"] = "{}/{}".format(source_prefix, original_tiff["href"])
-    original_tiff["title"] = "RGB GeoTIFF"
-    original_tiff["type"] = "image/vnd.stac.geotiff"
-    del original_tiff["name"]
-
-    new_assets["original TIFF"] = original_tiff
-
-    if "tiff world file" in assets:
-        original_tiff_world = assets["tiff world file"]
-        original_tiff_world["href"] = "{}/{}".format(
-            source_prefix, original_tiff_world["href"]
+        source_prefix = "https://{}.s3.amazonaws.com/{}".format(
+            SOURCE_BUCKET_NAME, "/".join(key.key.split("/")[0:-1])
         )
-        original_tiff_world["title"] = "RGB GeoTIFF world file"
-        original_tiff_world[
-            "type"
-        ] = (
-            "text/plain"
-        )  # per https://www.loc.gov/preservation/digital/formats/fdd/fdd000287.shtml#sign
-        del original_tiff_world["name"]
 
-        new_assets["original TIFF world file"] = original_tiff_world
+        new_assets = {}
 
-    jpeg = assets["RGB JPEG"]
-    jpeg["href"] = "{}/{}".format(source_prefix, jpeg["href"])
-    jpeg["title"] = jpeg["name"]
-    jpeg["type"] = "image/jpeg"
-    del jpeg["name"]
+        if type(assets) is dict:
+            original_tiff = assets["RGB Tif"]
+            original_tiff["href"] = "{}/{}".format(source_prefix, original_tiff["href"])
+            original_tiff["title"] = "RGB GeoTIFF"
+            original_tiff["type"] = "image/vnd.stac.geotiff"
+            original_tiff["eo:bands"] = [0, 1, 2]
+            del original_tiff["name"]
 
-    new_assets["JPEG"] = jpeg
+            new_assets["original TIFF"] = original_tiff
 
-    jpeg_overviews = assets["jpg overview"]
-    jpeg_overviews["href"] = "{}/{}".format(source_prefix, jpeg_overviews["href"])
-    jpeg_overviews["title"] = "JPEG overviews"
-    jpeg_overviews["type"] = "image/tiff"
-    del jpeg_overviews["name"]
+            if "tiff world file" in assets:
+                original_tiff_world = assets["tiff world file"]
+                original_tiff_world["href"] = "{}/{}".format(
+                    source_prefix, original_tiff_world["href"]
+                )
+                original_tiff_world["title"] = "RGB GeoTIFF world file"
+                original_tiff_world[
+                    "type"
+                ] = (
+                    "text/plain"
+                )  # per https://www.loc.gov/preservation/digital/formats/fdd/fdd000287.shtml#sign
+                del original_tiff_world["name"]
 
-    new_assets["JPEG overviews"] = jpeg_overviews
+                new_assets["original TIFF world file"] = original_tiff_world
 
-    jpeg_world = assets["jpeg world file"]
-    jpeg_world["href"] = "{}/{}".format(source_prefix, jpeg_world["href"])
-    jpeg_world["title"] = "JPEG world file"
-    jpeg_world["type"] = "text/plain"
-    del jpeg_world["name"]
+            jpeg = assets["RGB JPEG"]
+            jpeg["href"] = "{}/{}".format(source_prefix, jpeg["href"])
+            jpeg["title"] = jpeg["name"]
+            jpeg["type"] = "image/jpeg"
+            del jpeg["name"]
 
-    new_assets["JPEG world file"] = jpeg_world
+            new_assets["JPEG"] = jpeg
 
-    thumbnail = assets["thumbnail"]
-    thumbnail["href"] = "{}/{}".format(source_prefix, thumbnail["href"])
-    thumbnail["title"] = "Thumbnail"
-    thumbnail["type"] = "image/png"
-    del thumbnail["name"]
+            jpeg_overviews = assets["jpg overview"]
+            jpeg_overviews["href"] = "{}/{}".format(
+                source_prefix, jpeg_overviews["href"]
+            )
+            jpeg_overviews["title"] = "JPEG overviews"
+            jpeg_overviews["type"] = "image/tiff"
+            del jpeg_overviews["name"]
 
-    new_assets["thumbnail"] = thumbnail
+            new_assets["JPEG overviews"] = jpeg_overviews
 
-    visual = assets["cog"]
-    visual["href"] = "{}/{}".format(source_prefix, visual["href"])
-    visual["title"] = visual["name"]
-    visual["type"] = "image/vnd.stac.geotiff; cloud-optimized=true"
-    del visual["format"]
-    del visual["name"]
+            jpeg_world = assets["jpeg world file"]
+            jpeg_world["href"] = "{}/{}".format(source_prefix, jpeg_world["href"])
+            jpeg_world["title"] = "JPEG world file"
+            jpeg_world["type"] = "text/plain"
+            del jpeg_world["name"]
 
-    new_assets["visual"] = visual
+            new_assets["JPEG world file"] = jpeg_world
 
-    item = Item(
-        {
-            "type": "Feature",
-            "id": old_item["id"],
-            "bbox": old_item["bbox"],
-            "geometry": old_item["geometry"],
-            "properties": {"datetime": old_item["properties"]["datetime"]},
-            "assets": new_assets,
-        }
-    )
+            thumbnail = assets["thumbnail"]
+            thumbnail["href"] = "{}/{}".format(source_prefix, thumbnail["href"])
+            thumbnail["title"] = "Thumbnail"
+            thumbnail["type"] = "image/png"
+            del thumbnail["name"]
 
-    item_href = "{}.json".format(item.id)
-    item.add_link("root", root_href)
-    item.add_link("parent", "../catalog.json")
-    item.add_link("self", "{}{}/{}".format(root_prefix, catalog_id, item_href))
+            new_assets["thumbnail"] = thumbnail
 
-    key = "0.6.1/{}/{}".format(catalog_id, item_href)
+            visual = assets["cog"]
+            visual["href"] = "{}/{}".format(source_prefix, visual["href"])
+            visual["title"] = visual["name"]
+            visual["type"] = "image/vnd.stac.geotiff; cloud-optimized=true"
+            del visual["format"]
+            del visual["name"]
 
-    print(key)
-    obj = target_bucket.Object(key)
-    obj.put(Body=json.dumps(item.data), ContentType="application/json")
+            new_assets["visual"] = visual
 
-    catalog.add_link("item", item_href, title=item.id)
+        elif type(assets) is list:
+            for asset in assets:
+                if asset["href"].endswith(".TFW"):
+                    new_assets["original TIFF world file"] = {
+                        "href": "{}/{}".format(source_prefix, asset["href"]),
+                        "title": "RGB GeoTIFF world file",
+                        "type": "text/plain",
+                    }
+
+                if asset["href"].endswith(".JPG"):
+                    new_assets["JPEG"] = {
+                        "href": "{}/{}".format(source_prefix, asset["href"]),
+                        "title": "RGB JPEG",
+                        "type": "image/jpeg",
+                    }
+
+                if asset["href"].endswith(".png"):
+                    new_assets["thumbnail"] = {
+                        "href": "{}/{}".format(source_prefix, asset["href"]),
+                        "title": "Thumbnail",
+                        "type": "image/png",
+                    }
+
+                if asset["href"].endswith(".JGW"):
+                    new_assets["JPEG world file"] = {
+                        "href": "{}/{}".format(source_prefix, asset["href"]),
+                        "title": "JPEG world file",
+                        "type": "text/plain",
+                    }
+
+                if asset["href"].endswith(".JPG.ovr"):
+                    new_assets["JPEG overviews"] = {
+                        "href": "{}/{}".format(source_prefix, asset["href"]),
+                        "title": "JPEG overviews",
+                        "type": "image/tiff",
+                    }
+
+                if asset["href"].endswith(".TIF"):
+                    new_assets["visual"] = {
+                        "href": "{}/{}".format(source_prefix, asset["href"]),
+                        "title": "3-Band RGB GeoTIFF",
+                        "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+                    }
+
+        item = Item(
+            {
+                "type": "Feature",
+                "id": old_item["id"],
+                "bbox": old_item["bbox"],
+                "geometry": old_item["geometry"],
+                "properties": {
+                    "datetime": old_item["properties"].get(
+                        "datetime", old_item["properties"].get("start")
+                    )
+                },
+                "assets": new_assets,
+            }
+        )
+
+        item_href = "{}.json".format(item.id)
+        item.add_link("root", root_href)
+        item.add_link("parent", "../catalog.json")
+        item.add_link("self", "{}{}/{}".format(root_prefix, catalog_id, item_href))
+
+        key = "0.6.1/{}/{}".format(catalog_id, item_href)
+
+        print(key)
+        obj = target_bucket.Object(key)
+        obj.put(Body=json.dumps(item.data), ContentType="application/json")
+
+        catalog.add_link("item", item_href, title=item.id)
+    except Exception as e:
+        print(key.key)
+        del old_item["geometry"]
+        print(json.dumps(old_item))
+        raise e
 
 for v in catalogs.values():
-    element = dict(ChainMap({}, {
-        "stac_version": "0.6.1"
-    }, v.data))
+    element = dict(ChainMap({}, {"stac_version": "0.6.1"}, v.data))
 
     if v.id == "ISERV":
         key = "0.6.1/catalog.json"
