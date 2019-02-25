@@ -52,7 +52,7 @@ Radiant Earth Foundation
 
 ISERV is a true color image in JPEG format. Each band is delivered as a
 grayscale, JPEG-compressed, 8-bit string of unsigned integers. Bands are not
-calibrated. Accompanying each image is an XML auxiliary file, a JGW (ìworldî)
+calibrated. Accompanying each image is an XML auxiliary file, a JGW ("world")
 file that provides image location and geometry information, and an OVR
 overview file containing the reduced resolution image pyramid for ease of use
 in image processing software.
