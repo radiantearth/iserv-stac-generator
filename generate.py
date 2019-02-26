@@ -163,15 +163,15 @@ root_catalog = Catalog(
             "eo:instrument": "ISERV",
             "eo:bands": [
                 {
-                    "centerWavelength": 0.7,
+                    "center_wavelength": 0.7,
                     "common_name": "red",
                 },
                 {
-                    "centerWavelength": 0.55,
+                    "center_wavelength": 0.55,
                     "common_name": "green",
                 },
                 {
-                    "centerWavelength": 0.45,
+                    "center_wavelength": 0.45,
                     "common_name": "blue",
                 },
             ]
